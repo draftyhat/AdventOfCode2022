@@ -1,5 +1,5 @@
 /* compile with
-   kotlinc Day01.kt -include-runtime -d Day01.jar && java -jar Day01.jar -t
+   kotlinc Day01.kt -include-runtime -d Day01.jar && java -jar Day01.jar -1
 */
 import kotlin.io.NoSuchFileException
 import java.io.File
