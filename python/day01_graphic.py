@@ -15,6 +15,8 @@ AOC_YEAR=2022
 INPUTDIR="../input"
 inputfile = os.path.join(INPUTDIR, f"day{AOC_DAY:02d}_input")
 FRAME_WAIT=0.02
+# for recording
+#FRAME_WAIT=0.3
 DOWN_FRAMES=7
 
 logfile = '/tmp/aoc.log'
@@ -78,8 +80,8 @@ elf_body_jump_templates = ['''   \ \__/ \__/ /
         | |        
    o  _/ _ \       
    |\/ _/ | |      
-   |__/  / /_o    
-         \__/     ''',
+   |__/  / /_o     
+         \__/      ''',
 '''   \ \__/ \__/ /   
     \__/   \__/    
    .__/_____\__.   
@@ -90,8 +92,8 @@ elf_body_jump_templates = ['''   \ \__/ \__/ /
    o    | |        
    |\__/ _ \       
    |____/ | |      
-         / /_o    
-         \__/     ''',
+         / /_o     
+         \__/      ''',
 '''   \ \__/ \__/ /   
     \__/   \__/    
    .__/_____\__.   
@@ -102,8 +104,8 @@ elf_body_jump_templates = ['''   \ \__/ \__/ /
        _| |        
    o  / __ \       
    |\/ /  | |      
-    \_/  / /_o    
-         \__/     ''',
+    \_/  / /_o     
+         \__/      ''',
 '''   \ \__/ \__/ /   
     \__/   \__/    
    .__/_____\__.   
@@ -114,8 +116,8 @@ elf_body_jump_templates = ['''   \ \__/ \__/ /
       __| |        
      /  __ \       
    o | / / /       
-   |\/ |/ /_o     
-    \_/ \__/      ''',
+   |\/ |/ /_o      
+    \_/ \__/       ''',
 ]
 elf_template_width = elf_body_template.find("\n")
 elf_template_height = len(elf_head_faceright_template.split("\n")) + len(elf_body_template.split("\n"))
@@ -135,7 +137,7 @@ class Elf:
 
     @classmethod
     def get_max_jump_step(cls):
-        return len(elf_body_jump_templates) * 2
+        return len(elf_body_jump_templates) * 2 - 1
 
     def add_food(self, food):
         self.foodslist.append(food)
@@ -168,8 +170,10 @@ class Elf:
         head_template = elf_head_faceleft_template if faceleft else elf_head_faceright_template
         self.drawing += head_template.split('\n')
         body_template = elf_body_template
-        if(jump_step != None):
-            body_template = elf_body_jump_templates[jump_step % len(elf_body_jump_templates)]
+        if jump_step != None:
+            if jump_step >= len(elf_body_jump_templates):
+                jump_step = min(0, len(elf_body_jump_templates) - jump_step)
+            body_template = elf_body_jump_templates[jump_step]
         for line in body_template.format(self.sum).split('\n'):
           self.drawing.append(line.center(width))
         self.create_pads()
@@ -292,7 +296,9 @@ def main(screen):
             smallestelf.dropping = True
             logger.info(f"dropping elf {elf.sum}")
             smallestelf.create_drawing()
-            smallestelf.positiony += down_frame_magnitude
+            # looks a bit odd if it's in exactly the same position and just
+            # changes color, so we drop it one row.
+            smallestelf.positiony += 1
 
         # if there's room for another visible elf, add one to the array
         if len(elves) > 0 and visible_elves[-1].positionx < maxx - elf_width:
@@ -321,42 +327,48 @@ def main(screen):
     elf = visible_elves[0]
     elf_centerx = maxx//2 - elf.width()//2
     while elf.positionx < elf_centerx:
-        # redraw elf one step to the right
-        elf.erasepad.refresh(0, 0, elf.positiony, elf.positionx,
+        # redraw elf one step to the right, facing right
+        elf.create_drawing(faceleft = Elf.FACERIGHT)
+        elf.erasepad.noutrefresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         elf.positionx += 1
-        elf.pad.refresh(0, 0, elf.positiony, elf.positionx,
+        elf.pad.noutrefresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         time.sleep(FRAME_WAIT)
+        screen.refresh()
     #  jump up two steps
     for plusy in range(2):
+        elf.create_drawing(faceleft = Elf.FACELEFT)
         # this isn't quite right, for tall elves we might have to cut a row off
         # the top. This will crash in short windows.
-        elf.erasepad.refresh(0, 0, elf.positiony, elf.positionx,
+        elf.erasepad.noutrefresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         elf.positiony -= 1
-        elf.pad.refresh(0, 0, elf.positiony, elf.positionx,
+        elf.pad.noutrefresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
+        screen.refresh()
         time.sleep(FRAME_WAIT)
     #  kick legs
     for jump_step in range(1, elf.get_max_jump_step()):
-        elf.erasepad.refresh(0, 0, elf.positiony, elf.positionx,
-                maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         elf.create_drawing(jump_step = jump_step)
         elf.pad.refresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         time.sleep(FRAME_WAIT*6)
     elf.create_drawing()
+    elf.pad.refresh(0, 0, elf.positiony, elf.positionx,
+            maxy - 1, min(elf.positionx + elf_width, maxx - 1))
+    time.sleep(FRAME_WAIT*2)
     #  jump back down
     for plusy in range(2):
-        elf.erasepad.refresh(0, 0, elf.positiony, elf.positionx,
+        elf.erasepad.noutrefresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         elf.positiony += 1
-        elf.pad.refresh(0, 0, elf.positiony, elf.positionx,
+        elf.pad.noutrefresh(0, 0, elf.positiony, elf.positionx,
                 maxy - 1, min(elf.positionx + elf_width, maxx - 1))
         time.sleep(FRAME_WAIT*2)
+        screen.refresh()
     #  pause for a moment
-    time.sleep(4)
+    time.sleep(20)
 
 
 # run the main function inside the curses wrapper
