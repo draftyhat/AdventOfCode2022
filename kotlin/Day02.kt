@@ -20,7 +20,7 @@ val score_scissors = 3
    B,Y -> paper
    C,A -> scissors */
 
-val scoreMap = mapOf(
+val scoreMapPart1 = mapOf(
  "A X" to score_draw + score_rock,
  "A Y" to score_win + score_paper,
  "A Z" to score_lose + score_scissors,
@@ -32,8 +32,31 @@ val scoreMap = mapOf(
  "C Z" to score_draw + score_scissors,
 )
 
+/* in part 2, X means you need to lose,
+   Y means you need to draw, and Z means you need to win */
+val scoreMapPart2 = mapOf(
+    /* rock, lose via scissors */
+ "A X" to score_lose + score_scissors,
+    /* rock, draw via rock */
+ "A Y" to score_draw + score_rock,
+    /* rock, win via paper */
+ "A Z" to score_win + score_paper,
+    /* paper, lose via rock */
+ "B X" to score_lose + score_rock,
+    /* paper, draw via paper */
+ "B Y" to score_draw + score_paper,
+    /* paper, win via scissors */
+ "B Z" to score_win + score_scissors,
+    /* scissors, lose via paper */
+ "C X" to score_lose + score_paper,
+    /* scissors, draw via scissors */
+ "C Y" to score_draw + score_scissors,
+    /* scissors, win via rock */
+ "C Z" to score_win + score_rock,
+)
 
-fun Part1(input:String) : Boolean {
+
+fun calculateScore(input:String, scoreMap: Map<String, Int>) : Boolean {
   var score = 0
   /* for each turn (each line in the file) */
   for(line in input.split("\n")) {
@@ -49,8 +72,12 @@ fun Part1(input:String) : Boolean {
   return true
 }
 
+fun Part1(input:String) : Boolean {
+  return calculateScore(input, scoreMapPart1)
+}
+
 fun Part2(input:String) : Boolean {
-  return false
+  return calculateScore(input, scoreMapPart2)
 }
 
 fun main(args: Array<String>) {
