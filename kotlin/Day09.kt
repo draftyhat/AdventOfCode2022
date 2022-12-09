@@ -79,8 +79,96 @@ fun Part1(input:String) : Boolean {
   return true
 }
 
+/* get new tail position if head moves in one of the four cardinal positions
+ * (diagonals not supported) */
+fun getNewTailPosition(head: Point, tail: Point): Point? {
+  var newTail: Point? = null
+  if(tail.x < head.x - 1) {
+    newTail = Point(head.x - 1, head.y)
+  } else if(tail.x > head.x + 1) {
+    newTail = Point(head.x + 1, head.y)
+  } else if(tail.y < head.y - 1) {
+    newTail = Point(head.x, head.y - 1)
+  } else if(tail.y > head.y + 1) {
+    newTail = Point(head.x, head.y + 1)
+  }
+
+  return newTail
+}
+
+fun moveHeadReturnPositions(inputPositions: MutableList<Point>,
+    headStart: Point, tailStart: Point): MutableList<Point> {
+  /* grid goes from bottom left (0,0) to top right 
+     The grid class prints out as if from top left to bottom right, so
+     it will appear upside down. */
+  var tail = tailStart
+  var newPositions = mutableListOf<Point>(tailStart)
+  var newTail: Point?
+
+  /* move to each position, dragging the tail
+     If the head moves diagonally away from the tail, process two moves, one
+     each in the cardinal directions. */
+  for(position in inputPositions) {
+    /* If the head is moving diagonally away from the tail, split this move
+     * into two moves */
+    if(Math.abs(position.x - tail.x) == 2 && Math.abs(position.y - tail.y) == 2) {
+      val halfPosition = Point(position.x - (position.x - tail.x)/2, position.y)
+      newTail = getNewTailPosition(halfPosition, tail)
+      if(newTail != null) {
+        newPositions.add(newTail)
+        tail = newTail
+      }
+      newTail = getNewTailPosition(position, tail)
+      if(newTail != null) {
+        newPositions.add(newTail)
+        tail = newTail
+      }
+    } else {
+      newTail = getNewTailPosition(position, tail)
+      if(newTail != null) {
+        newPositions.add(newTail)
+        tail = newTail
+      }
+    }
+
+    //println("$position  $tail")
+  }
+
+  return newPositions
+}
+
 fun Part2(input:String) : Boolean {
-  return false
+  val ropeLength = 10
+
+  /* translate directions into a list of points */
+  var position = Point(0,0)
+  var positionList = mutableListOf<Point>(position)
+  for(line in input.trim().split('\n')) {
+    val direction = line[0]
+    val nmoves = line.split(" ")[1].toInt()
+    for(i in 0 until nmoves) {
+      when(direction) {
+        'R' -> { position = Point(position.x + 1, position.y) }
+        'L' -> { position = Point(position.x - 1, position.y) }
+        'U' -> { position = Point(position.x, position.y - 1) }
+        'D' -> { position = Point(position.x, position.y + 1) }
+      }
+      positionList.add(position)
+    }
+  }
+
+  /* run the rope, one knot at a time */
+  //println(positionList.joinToString(""))
+  for(i in 1 until ropeLength) {
+    positionList = moveHeadReturnPositions(
+        positionList, Point(0, 0), Point(0, 0))
+    println(positionList.joinToString(""))
+  }
+
+  val positionSet = positionList.toSet()
+  println("Knot $ropeLength traveled ${positionSet.size} Planck units")
+
+  return true
 }
 
 fun main(args: Array<String>) {
