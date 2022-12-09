@@ -31,6 +31,9 @@ class Point(
   override fun toString(): String {
     return "($x,$y)"
   }
+  override fun hashCode(): Int {
+    return (x.hashCode() * y).hashCode()
+  }
 }
 
 class Grid (
