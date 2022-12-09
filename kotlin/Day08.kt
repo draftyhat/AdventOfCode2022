@@ -75,8 +75,71 @@ fun Part1(input:String) : Boolean {
   return true
 }
 
+fun getScenicScore(grid: Grid, column: Int, row: Int): Int {
+  /* look left from this tree */
+  var seenLeft = 0
+  var tmpcolumn = column - 1
+  while(tmpcolumn >= 0) {
+    seenLeft++
+    /* quit when we see a tree equal to or taller than ours */
+    if(grid[tmpcolumn,row] >= grid[column, row])
+      break
+    tmpcolumn--
+  }
+
+  /* look right from this tree */
+  var seenRight = 0
+  tmpcolumn = column + 1
+  while(tmpcolumn < grid.width) {
+    seenRight++
+    /* quit when we see a tree equal to or taller than ours */
+    if(grid[tmpcolumn,row] >= grid[column, row])
+      break
+    tmpcolumn++
+  }
+
+  /* look up from this tree */
+  var seenUp = 0
+  var tmprow = row - 1
+  while(tmprow >= 0) {
+    seenUp++
+    /* quit when we see a tree equal to or taller than ours */
+    if(grid[column,tmprow] >= grid[column, row])
+      break
+    tmprow--
+  }
+
+  /* look down from this tree */
+  var seenDown = 0
+  tmprow = row + 1
+  while(tmprow < grid.height) {
+    seenDown++
+    /* quit when we see a tree equal to or taller than ours */
+    if(grid[column,tmprow] >= grid[column, row])
+      break
+    tmprow++
+  }
+
+  println("Score at ($column,$row): $seenLeft * $seenRight * $seenUp * $seenDown = ${seenLeft * seenRight * seenUp * seenDown}")
+  return seenLeft * seenRight * seenUp * seenDown
+}
+
 fun Part2(input:String) : Boolean {
-  return false
+  val inputLines = input.trim().split("\n")
+  val grid = Grid(inputLines[0].length, inputLines.size,
+      {x,y,z -> readGridItem(x,y,z) }, inputLines)
+
+  var maxScore = 0
+  for(x in 1 until (grid.width - 1)) {
+    for(y in 1 until (grid.height - 1)) {
+      val score = getScenicScore(grid, x, y)
+      if(score > maxScore)
+        maxScore = score
+    }
+  }
+
+  println("Max scenic score: $maxScore")
+  return true
 }
 
 fun main(args: Array<String>) {
