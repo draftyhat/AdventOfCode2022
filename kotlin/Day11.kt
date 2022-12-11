@@ -11,60 +11,66 @@ val INPUTDIR="../input"
 
 
 class Monkey(
-  var items: MutableList<Int>,
-  var operation: (Int) -> Int,
-  var test: Int,
+  var items: MutableList<Long>,
+  var operation: (Long) -> Long,
+  var test: Long,
   var trueRecipient: Int,
   var falseRecipient: Int,
-  var nItemsInspected: Int = 0,
+  var nItemsInspected: Long = 0,
 )
 
 val testMonkeys = arrayOf(
-  Monkey(mutableListOf(79,98), { x -> x * 19 }, 23, 2, 3),
-  Monkey(mutableListOf(54,65,75,74), { x -> x + 6 }, 19, 2, 0),
-  Monkey(mutableListOf(79,60,97), { x -> x * x }, 13, 1, 3),
-  Monkey(mutableListOf(74), { x -> x + 3 }, 17, 0, 1),
+  Monkey(mutableListOf(79L,98L), { x -> x * 19L }, 23L, 2, 3),
+  Monkey(mutableListOf(54L,65L,75L,74L), { x -> x + 6L }, 19L, 2, 0),
+  Monkey(mutableListOf(79L,60L,97L), { x -> x * x }, 13L, 1, 3),
+  Monkey(mutableListOf(74L), { x -> x + 3L }, 17L, 0, 1),
 )
 val problemMonkeys = arrayOf(
-  Monkey(mutableListOf(97,81,57,57,91,61), { x -> x * 7 }, 11, 5, 6),
-  Monkey(mutableListOf(88,62,68,90), { x -> x * 17 }, 19, 4, 2),
-  Monkey(mutableListOf(74,87), { x -> x + 2 }, 5, 7, 4),
-  Monkey(mutableListOf(53,81, 60, 87, 90, 99, 75), { x -> x + 1 }, 2, 2, 1),
-  Monkey(mutableListOf(57), { x -> x + 6 }, 13, 7, 0),
-  Monkey(mutableListOf(54,84,91,55,59,72,75,70), { x -> x * x }, 7, 6, 3),
-  Monkey(mutableListOf(95,79,79,68,78), { x -> x + 3 }, 3, 1, 3),
-  Monkey(mutableListOf(61,97,67), { x -> x + 4 }, 17, 0, 5),
+  Monkey(mutableListOf(97L,81L,57L,57L,91L,61L), { x -> x * 7L }, 11L, 5, 6),
+  Monkey(mutableListOf(88L,62L,68L,90L), { x -> x * 17L }, 19L, 4, 2),
+  Monkey(mutableListOf(74L,87L), { x -> x + 2L }, 5L, 7, 4),
+  Monkey(mutableListOf(53L,81L,60L,87,90,99,75L), { x -> x + 1L }, 2L, 2, 1),
+  Monkey(mutableListOf(57L), { x -> x + 6 }, 13L, 7, 0),
+  Monkey(mutableListOf(54L,84L,91L,55L,59L,72L,75L,70L), { x -> x * x }, 7L, 6, 3),
+  Monkey(mutableListOf(95L,79L,79L,68L,78L), { x -> x + 3L }, 3L, 1, 3),
+  Monkey(mutableListOf(61L,97L,67L), { x -> x + 4L }, 17L, 0, 5),
 )
 
-fun processMonkey(monkeys: Array<Monkey>, monkeyIndex: Int) {
+fun processMonkey(monkeys: Array<Monkey>, monkeyIndex: Int,
+    worryDivisor: Long, testModulus: Long) {
   val monkey = monkeys[monkeyIndex]
 
   /* process each item the monkey is carrying */
   val monkeyitems = monkey.items
-  monkey.items = mutableListOf<Int>()
+  monkey.items = mutableListOf<Long>()
   for(item in monkeyitems) {
     //println("Processing monkey $monkeyIndex item $item")
-    val newItem = monkey.operation(item) / 3
-    val recipient = if(newItem % monkey.test == 0) monkey.trueRecipient else monkey.falseRecipient
+    val newItem = (monkey.operation(item) / worryDivisor) % testModulus
+    val recipient = if(newItem % monkey.test == 0L) monkey.trueRecipient else monkey.falseRecipient
     monkeys[recipient].items.add(newItem)
     //println("  final value $newItem for monkey $recipient")
-    monkey.nItemsInspected += 1
+    monkey.nItemsInspected += 1L
   }
 }
 
-fun Part1(test: Boolean) : Boolean {
-  val nrounds = 20
+fun doProblem(nrounds: Long, test: Boolean, worryDivisor: Long) {
   val monkeys = if(test) testMonkeys else problemMonkeys
+
+  /* compute test modulus by taking product of all monkeys' tests */
+  var testModulus = 1L
+  for(monkey in monkeys) {
+    testModulus *= monkey.test
+  }
 
   for(round in 0 until nrounds) {
     //println("round $round")
     for(monkeyIndex in 0 until monkeys.size) {
       //println("Processing monkey $monkeyIndex")
-      processMonkey(monkeys, monkeyIndex)
+      processMonkey(monkeys, monkeyIndex, worryDivisor, testModulus)
     }
   }
 
-  val maxItemsInspected = arrayOf(0, 0)
+  val maxItemsInspected = arrayOf(0L, 0L)
   for(monkey in monkeys) {
     if(monkey.nItemsInspected > maxItemsInspected[0]) {
       if(monkey.nItemsInspected > maxItemsInspected[1]) {
@@ -76,12 +82,16 @@ fun Part1(test: Boolean) : Boolean {
   }
 
   println("Score: ${maxItemsInspected[0]} * ${maxItemsInspected[1]} = ${maxItemsInspected[0] * maxItemsInspected[1]}")
+}
 
+fun Part1(test: Boolean) : Boolean {
+  doProblem(20L, test, 3L)
   return true
 }
 
 fun Part2(test: Boolean) : Boolean {
-  return false
+  doProblem(10000L, test, 1L)
+  return true
 }
 
 fun main(args: Array<String>) {
