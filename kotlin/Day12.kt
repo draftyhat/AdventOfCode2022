@@ -121,32 +121,28 @@ fun readGridItem(column: Int, row: Int, opaque:Any): Square {
 }
 
 
-fun Part1(input:String) : Boolean {
+fun hike(input:String, start: Char = '0') : Int {
   val inputLines = input.trim().split('\n')
   val grid = Grid(inputLines[0].length, inputLines.size,
       { column, row, opaque -> readGridItem(column, row, opaque) },
       inputLines)
 
-  /* Find the start square */
-  var start: Square? = null
+  /* initlialize minHeap */
+  var pathlength = -1
+  val minheap = PriorityQueue<Square>( compareBy<Square> { it.pathlength } )
+
+  /* Find the start square(s) */
   for(column in 0 until grid.width) {
     for(row in 0 until grid.height) {
       val element = grid[column, row]
-      if(element.height == '0') {
-        start = element
-        break
+      if(element.height == start) {
+        element.pathlength = 0
+        minheap.add(element)
       }
     }
-    if(start != null)
-      break
   }
-  println("Found start $start")
 
   /* Djikstra-style traversal */
-  var pathlength = -1
-  val minheap = PriorityQueue<Square>( compareBy<Square> { it.pathlength } )
-  start?.pathlength = 0
-  minheap.add(start)
   while(minheap.size > 0 && pathlength == -1) {
     val here = minheap.remove()
     //println("${here.pathlength}] at ${here.row},${here.column} ${here.height}")
@@ -170,12 +166,18 @@ fun Part1(input:String) : Boolean {
   }
 
   println("Path length: ${pathlength} steps")
+  return pathlength
+}
 
+
+fun Part1(input:String) : Boolean {
+  hike(input, '0')
   return true
 }
 
 fun Part2(input:String) : Boolean {
-  return false
+  hike(input, 'a')
+  return true
 }
 
 fun main(args: Array<String>) {
