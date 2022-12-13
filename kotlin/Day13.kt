@@ -62,25 +62,25 @@ fun readPacket(inputLine: String) : MutableList<Any> {
   return retval[0] as MutableList<Any>
 }
 
-fun packetCompare(packet0: MutableList<Any>, packet1: MutableList<Any>) : Int {
+fun comparePackets(packet0: MutableList<Any>, packet1: MutableList<Any>) : Int {
   /* like a standard comparator, return 0 if equal, >0 if packet0 < packet1,
    * <0 if packet1 < packet0 */
   for(elementIndex in 0 until packet0.size) {
-    /* if packet1 is smaller, return -1 */
+    /* if packet1 is smaller, return 1 */
     if(packet1.size <= elementIndex)
-      return -1
+      return 1
 
     if(packet0[elementIndex]::class == Int::class) {
       val packet0int = packet0[elementIndex] as Int
       if(packet1[elementIndex]::class == Int::class) {
         val packet1int = packet1[elementIndex] as Int
         if(packet0int != packet1int)
-          return packet1int - packet0int
+          return packet0int - packet1int
         /* otherwise, they're equal, keep going */
       } else {
         /* packet1[elementIndex] is a list */
         /* one list, one int; convert the int to a list and compare the two lists */
-        val answer = packetCompare(mutableListOf<Any>(packet0int),
+        val answer = comparePackets(mutableListOf<Any>(packet0int),
             packet1[elementIndex] as MutableList<Any>)
         if(answer != 0)
           return answer
@@ -90,11 +90,11 @@ fun packetCompare(packet0: MutableList<Any>, packet1: MutableList<Any>) : Int {
       var answer = 0
       if(packet1[elementIndex]::class == Int::class) {
         /* one list, one int; convert the int to a list and compare the two lists */
-        answer = packetCompare(packet0[elementIndex] as MutableList<Any>,
+        answer = comparePackets(packet0[elementIndex] as MutableList<Any>,
             mutableListOf<Any>(packet1[elementIndex] as Int))
       } else {
         /* two lists */
-        answer = packetCompare(packet0[elementIndex] as MutableList<Any>,
+        answer = comparePackets(packet0[elementIndex] as MutableList<Any>,
             packet1[elementIndex] as MutableList<Any>)
       }
       if(answer != 0)
@@ -102,7 +102,7 @@ fun packetCompare(packet0: MutableList<Any>, packet1: MutableList<Any>) : Int {
     }
   }
   if(packet1.size > packet0.size)
-    return 1
+    return -1
   return 0
 }
 
@@ -115,8 +115,8 @@ fun readAndComparePackets(input: String) : Int {
     val packet0 = readPacket(inputLines[inputLineIndex - 1])
     val packet1 = readPacket(inputLines[inputLineIndex])
 
-    println("   comparison: ${packetCompare(packet0, packet1)}")
-    if(packetCompare(packet0, packet1) >= 0)
+    println("   comparison: ${comparePackets(packet0, packet1)}")
+    if(comparePackets(packet0, packet1) <= 0)
       retval += packetPairIndex
 
     packetPairIndex += 1
@@ -126,11 +126,43 @@ fun readAndComparePackets(input: String) : Int {
 
 fun Part1(input:String) : Boolean {
   println("Indices sum: ${readAndComparePackets(input)}")
-  return false
+  return true
 }
 
 fun Part2(input:String) : Boolean {
-  return false
+  /* read all packets */
+  val packets = mutableListOf<Any>()
+  for(line in input.trim().split('\n')) {
+    if(line != "")
+      packets.add(readPacket(line))
+  }
+  /* add markers */
+  val marker0 = mutableListOf<Any>(mutableListOf<Any>(2))
+  packets.add(marker0)
+  val marker1 = mutableListOf<Any>(mutableListOf<Any>(6))
+  packets.add(marker1)
+  /* sort */
+  val sortedPackets = packets.sortedWith { packet0, packet1 ->
+    comparePackets(packet0 as MutableList<Any>, packet1 as MutableList<Any>)
+  }
+
+  /* find markers */
+  var retval = 1
+  println("----- sortedPackets:")
+  sortedPackets.forEachIndexed { index, packet ->
+    println(packet)
+    if(packet == marker0) { 
+      println("Found marker0 at index $index")
+      retval *= (index + 1)
+    } else if(packet == marker1) { 
+      println("Found marker1 at index $index")
+      retval *= (index + 1)
+    }
+  }
+
+  println("Marker index product: $retval")
+
+  return true
 }
 
 fun main(args: Array<String>) {
