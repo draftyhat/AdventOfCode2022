@@ -58,7 +58,6 @@ fun readPacket(inputLine: String) : MutableList<Any> {
 
   /* we start with a top-level list which is not part of the input, gotta get
    * rid of that */
-  println(retval[0])
   return retval[0] as MutableList<Any>
 }
 
@@ -115,7 +114,6 @@ fun readAndComparePackets(input: String) : Int {
     val packet0 = readPacket(inputLines[inputLineIndex - 1])
     val packet1 = readPacket(inputLines[inputLineIndex])
 
-    println("   comparison: ${comparePackets(packet0, packet1)}")
     if(comparePackets(packet0, packet1) <= 0)
       retval += packetPairIndex
 
@@ -148,14 +146,12 @@ fun Part2(input:String) : Boolean {
 
   /* find markers */
   var retval = 1
-  println("----- sortedPackets:")
   sortedPackets.forEachIndexed { index, packet ->
-    println(packet)
     if(packet == marker0) { 
-      println("Found marker0 at index $index")
+      //println("Found marker0 at index $index")
       retval *= (index + 1)
     } else if(packet == marker1) { 
-      println("Found marker1 at index $index")
+      //println("Found marker1 at index $index")
       retval *= (index + 1)
     }
   }
