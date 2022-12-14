@@ -19,6 +19,9 @@ package draftyhat
 class Point(
     val x: Int,
     val y: Int) {
+  constructor(s: String) : this(s.trim('(').split(',')[0].toInt(),
+      s.trim(')').split(',')[1].toInt())
+
   operator fun plus(p: Point): Point {
     return Point(x + p.x, y + p.y)
   }

@@ -10,21 +10,21 @@ val YEAR=2022
 val INPUTDIR="../input"
 
 fun drawCRT(cycle: Int, x: Int) {
+  if(cycle % 40 == 0)
+    println("")
   if(Math.abs(x - (cycle % 40)) < 2)
     print("#")
   else
     print('.')
-  if(cycle % 40 == 0)
-    println("")
 }
 
 fun executeProgram(input: String): Int {
   var cycle = 1
   var sum = 0
   var x = 1
+  drawCRT(cycle, x)
   for(line in input.trim().split('\n')) {
     drawCRT(cycle, x)
-
 
     val instruction = line.split(' ')
     when(instruction[0]) {
