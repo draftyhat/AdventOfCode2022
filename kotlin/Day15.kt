@@ -5,14 +5,20 @@ import kotlin.io.NoSuchFileException
 import java.io.File
 import java.io.InputStream
 import draftyhat.Point
+import java.time.LocalTime
 
 val DAY=15
 val YEAR=2022
 val INPUTDIR="../input"
 
-class Sensor(val location: Point, val beacon: Point, var distance: Int = 0) {
+class Sensor(val location: Point, val beacon: Point) {
+  val distance = Math.abs(location.x - beacon.x) + Math.abs(location.y - beacon.y)
+  val minimumDetectedRow = location.y - distance
+  val maximumDetectedRow = location.y + distance
+  val minimumDetectedColumn = location.x - distance
+  val maximumDetectedColumn = location.x + distance
   init {
-    distance = Math.abs(location.x - beacon.x) + Math.abs(location.y - beacon.y)
+    println("Creating sensor at $location, distance $distance rows $minimumDetectedRow - $maximumDetectedRow")
   }
   fun inRange(p: Point): Boolean {
     /* returns True if this point is not a beacon location */
@@ -73,8 +79,52 @@ fun Part1(input:String, test: Boolean) : Boolean {
   return true
 }
 
-fun Part2(input:String) : Boolean {
-  return false
+fun Part2(input:String, test: Boolean) : Boolean {
+  val sensorList = readInput(input)
+  val rows = if(test) 20 else 4000000
+  val columns = if(test) 20 else 4000000
+
+  /* sort the sensors by minimum detected row */
+  sensorList.sortBy { it.minimumDetectedRow }
+
+  /* check each spot in the grid */
+  var inrange = false
+  for(row in 0..rows) {
+    /* Only check sensors who can detect something in range of this row. */
+    var currentSensorList = mutableListOf<Sensor>()
+    //println("-- row $row")
+    for(sensor in sensorList) {
+      if(sensor.minimumDetectedRow <= row && row <= sensor.maximumDetectedRow) {
+        currentSensorList.add(sensor)
+        //println("--   adding sensor ${sensor.location} distance ${sensor.distance}")
+      }
+    }
+
+    if((row % 1000) == 0) {
+      println("-- starting row $row at ${LocalTime.now()}")
+    }
+    for(column in 0..columns) {
+      inrange = false
+      while(currentSensorList.size > 0 && currentSensorList[0].maximumDetectedColumn < column)
+        currentSensorList.removeAt(0)
+
+      for(sensor in currentSensorList) {
+        if(Math.abs(column - sensor.location.x) + Math.abs(row - sensor.location.y) <=
+            sensor.distance) {
+          //println("--  Point ($row,$column) in range of sensor at ${sensor.location} (distance ${Math.abs(column - sensor.location.x) + Math.abs(row-sensor.location.y)}, sensor distance ${sensor.distance})")
+          inrange = true
+          break
+        }
+      }
+      if(inrange == false) {
+        println("Found beacon position! $column $row, frequency ${row.toLong() * 4000000L + column.toLong()}")
+        break
+      }
+    }
+    if(inrange == false)
+        break
+  }
+  return inrange == false
 }
 
 fun main(args: Array<String>) {
@@ -103,7 +153,7 @@ fun main(args: Array<String>) {
           success = Part1(testInput, true)
         }
         if(success && "-t2" in args) {
-          success = Part2(testInput)
+          success = Part2(testInput, true)
         }
 
         if(!success)
@@ -128,7 +178,7 @@ fun main(args: Array<String>) {
     }
     if(success == true && "-2" in args) {
       println("--- running part 2 ---")
-      success = Part2(inputText)
+      success = Part2(inputText, false)
       ranN += 1
     }
   }
