@@ -11,6 +11,23 @@ val DAY=15
 val YEAR=2022
 val INPUTDIR="../input"
 
+class Range(val minValue: Int, val maxValue: Int) {
+  /* return union of ranges if ranges intersect, else null */
+  fun union(other: Range) : Range? {
+    if(other.maxValue < (minValue - 1) || other.minValue > (maxValue + 1))
+      return null
+    return Range(Math.min(minValue, other.minValue), Math.max(maxValue, other.maxValue))
+  }
+
+  override operator fun equals(other: Any?): Boolean {
+    return other is Range && minValue == other.minValue && maxValue == other.maxValue
+  }
+
+  override fun toString(): String {
+    return "[" + minValue.toString() + "," + maxValue.toString() + "]"
+  }
+}
+
 class Sensor(val location: Point, val beacon: Point) {
   val distance = Math.abs(location.x - beacon.x) + Math.abs(location.y - beacon.y)
   val minimumDetectedRow = location.y - distance
@@ -24,6 +41,17 @@ class Sensor(val location: Point, val beacon: Point) {
     /* returns True if this point is not a beacon location */
     val newBeaconDistance = Math.abs(p.x - location.x) + Math.abs(p.y - location.y)
     return newBeaconDistance <= distance
+  }
+  fun getRangeInRow(row: Int): Range? {
+    /* get the range this sensor covers in the given row, if any */
+    if(row < minimumDetectedRow || row > maximumDetectedRow)
+      return null
+    val rangeWidth = distance - Math.abs(row - location.y)
+    return Range(location.x - rangeWidth, location.x + rangeWidth)
+  }
+
+  override fun toString(): String {
+    return "sensor$location distance $distance"
   }
 }
 
@@ -80,6 +108,61 @@ fun Part1(input:String, test: Boolean) : Boolean {
 }
 
 fun Part2(input:String, test: Boolean) : Boolean {
+  val sensorList = readInput(input)
+  val rows = if(test) 20 else 4000000
+  val columns = if(test) 20 else 4000000
+
+  /* sort the sensors by minimum detected row */
+  sensorList.sortBy { it.minimumDetectedRow }
+
+  /* for each row */
+  for(row in 0..rows) {
+    /* find all sensors that intersect this row. For each of those, record the
+     * ranges covered by that sensor */
+
+    val ranges = mutableListOf<Range>()
+    for(sensor in sensorList) {
+      val range = sensor.getRangeInRow(row)
+      //println("$sensor, range in row $row $range")
+      if(range != null)
+        ranges.add(range)
+    }
+
+    //println("---- ranges:")
+    //println(ranges)
+    ranges.sortBy { it.minValue }
+    var merged = true
+    while(merged && ranges.size > 1) {
+      merged = false
+      val toMerge = ranges.removeAt(0)
+      for(rangeIndex in 0 until ranges.size) {
+        val newRange = toMerge.union(ranges[rangeIndex])
+        //println("----  merged $toMerge, ${ranges[rangeIndex]} -> $newRange")
+        if(newRange != null) {
+          ranges.removeAt(rangeIndex)
+          ranges.add(0, newRange)
+          merged = true
+        }
+      }
+    }
+    //println("----  ranges at end $ranges")
+    /* if we were unable to merge the ranges down to one, our missing spot is
+       the end of the first range plus one. Oh, whoops, we lost the first
+       range. It's 1 before the beginning of the first range. */
+    if(ranges[0].minValue > 0) {
+      println("Found missing spot! (${ranges[0].minValue - 1},$row), frequency ${(ranges[0].minValue.toLong() - 1L) * 4000000L + row.toLong()}")
+      return true
+    } else if(ranges[0].maxValue < columns) {
+      println("Found missing spot! ($columns,$row), frequency ${columns.toLong() * 4000000L + row.toLong()}")
+      return true
+    }
+    /* otherwise, the ranges cover this entire row. Keep searching. */
+  }
+
+  return false
+}
+
+fun Part2_old(input:String, test: Boolean) : Boolean {
   val sensorList = readInput(input)
   val rows = if(test) 20 else 4000000
   val columns = if(test) 20 else 4000000
