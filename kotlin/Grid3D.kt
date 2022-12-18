@@ -41,19 +41,26 @@ class Face(val a: Point3D, val b: Point3D) {
   }
 }
 
-/* a cube is delineated by the two opposite corners */
+/* a box is delineated by the two opposite corners */
 /* assumes a > b for every dimension */
-class Cube(val a: Point3D, val b: Point3D) {
+class Box(val a: Point3D, val b: Point3D) {
   init {
     if(b.x < a.x || b.y < a.y || b.z < a.z)
       throw Exception("ERROR: starting point must be strictly greater" +
           " than opposite corner. Try" +
-         " ({Math.min(a.x,b.x), Math.min(a.y,b.y), Math.min(a.z,b.z))," +
-         " ({Math.max(a.x,b.x), Math.max(a.y,b.y), Math.max(a.z,b.z)).")
+         " ${Point3D(Math.min(a.x,b.x), Math.min(a.y,b.y), Math.min(a.z,b.z))}," +
+         " ${Point3D(Math.max(a.x,b.x), Math.max(a.y,b.y), Math.max(a.z,b.z))}.")
+  }
+  override fun hashCode(): Int {
+    return (a.hashCode() +
+      (b.x-a.x)*(b.x-a.x) + ((b.y-a.y)*(b.y-a.y)) + ((b.z-a.z)*(b.z-a.z))).hashCode()
+  }
+  override operator fun equals(other: Any?): Boolean {
+    return other is Box && other.a == a && other.b == b
   }
 
   fun getFaces(): MutableList<Face> {
-    /* get a list of the faces of this cube */
+    /* get a list of the faces of this box */
     val retval = mutableListOf<Face>()
     for(xIter in a.x until b.x) {
       for(yIter in a.y until b.y) {
@@ -87,8 +94,33 @@ class Cube(val a: Point3D, val b: Point3D) {
     return retval
   }
 
+  /* get this box's 6 closest neighbors (no diagonals). The unknown
+     dimension of each neighbor will be 1. */
+  fun getNeighbors(): List<Box> {
+    return listOf(
+        /* front */
+        Box(Point3D(a.x, a.y - 1, a.z),
+            Point3D(b.x, a.y,     b.z)),
+        /* top */
+        Box(Point3D(a.x, a.y, b.z    ),
+            Point3D(b.x, b.y, b.z + 1)),
+        /* right */
+        Box(Point3D(b.x    , a.y, a.z),
+            Point3D(b.x + 1, b.y, b.z)),
+        /* left */
+        Box(Point3D(a.x - 1, a.y, a.z),
+            Point3D(a.x    , b.y, b.z)),
+        /* back */
+        Box(Point3D(a.x, b.y    , a.z),
+            Point3D(b.x, b.y + 1, b.z)),
+        /* bottom */
+        Box(Point3D(a.x, a.y, a.z - 1),
+            Point3D(b.x, b.y, a.z    )),
+    )
+  }
+
   override fun toString(): String {
-    return "Cube($a,$b)"
+    return "Box($a,$b)"
   }
 }
 
@@ -102,7 +134,7 @@ data class Point3DReadTestcase(
   val inputLine: String,
   val point: Point3D,
 )
-data class Cube3DFaceTestcase(
+data class Box3DFaceTestcase(
   val inputLines: Array<String>,
   val expectedAnswerSize: Int
 )
