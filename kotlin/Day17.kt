@@ -215,8 +215,10 @@ fun dropRocks(input:String, nrounds: Long) : Long {
     if(roundVariables.nmoves == 0 && round % rocks.size == 0L) {
       println("-- modulo 0, topY ${roundVariables.topY}")
     }
-    //if(round % rocks.size == 0L)
-    //  print(" ${roundVariables.nmoves}")
+    if(round < 100)
+      println("$round] ${roundVariables.topY}")
+    else if(round % rocks.size == 0L)
+      println("$round] ${roundVariables.topY} ${roundVariables.nmoves}")
 
     oneRound(roundVariables, round, goingRight)
   }
@@ -308,3 +310,74 @@ fun main(args: Array<String>) {
     println("Advent of Code $YEAR Day $DAY $ranN activities: $successstring")
   }
 }
+
+
+/* 
+   calculating part2 by hand
+
+-- test
+
+1000000000000
+
+loop 5, 34, 21, 10, 2 starts at
+135] 210
+170] 263
+205] 316
+240] 369
+
+loop is 35 long, adds 53 rows
+
+(1000000000000 - 135) / 35
+28571428567 loops
+(1000000000000 - 135) % 35
+20 leftover
+
+155] 237
+135] 210
+20 leftover should add 27 rows
+
+
+so tower height is
+210 + 28571428567 * 53 + 27
+1514285714288
+
+that's the correct answer
+
+
+-- problem
+
+
+cycle 7,42,70,91,118 starts at
+3440 (topY 5270)
+5160 (topY 7896)
+6880 (topY 10522)
+8600 (topY 13148)
+
+loops are 1720 long
+each loop adds 2626
+
+
+(1000000000000 - 3440) / 1720
+581395346 loops
+(1000000000000 - 3440) % 1720
+1440
+
+each loop adds 2626
+
+1440 left over. TopY at 3440 + 1440 = 4880  is 6831
+3440 (topY 5270)
+4880 (topY 6831)
+difference: 6831 - 5270 = 1561
+
+so topY will be
+5270  + 581395346* 2626 + 1561
+1526744185427
+
+too low
+
+ok, probably have to cycle on what the shaft looks like too? This is just
+taking input and next shape.
+
+however, this calculation works on the test, and up into the millionth level of iterations in the problem...
+
+*/
