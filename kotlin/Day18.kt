@@ -58,7 +58,6 @@ fun eliminateInteriorBoxes(boxes: MutableList<Box>): MutableList<Box> {
     maxz = Math.max(box.a.z, maxz)
   }
 
-  println("Found min-max $minx-$maxx, $miny-$maxy, $minz-$maxz")
   /* set of boxes not in boxSet that are known to be exterior */
   var knownExterior = setOf<Box>()
   /* set of boxSet to add to this set so that all boxSet will be interior */
@@ -66,15 +65,14 @@ fun eliminateInteriorBoxes(boxes: MutableList<Box>): MutableList<Box> {
 
   /* for each box */
   for(box in boxSet) {
-    println("--- box $box ---")
+    //println("--- box $box ---")
     /* for each box adjacent to this one */
     for(neighbor in box.getNeighbors()) {
-      println("  - neighbor $neighbor -")
+      //println("  - neighbor $neighbor -")
       /* if this neighbor is already included, skip it */
       if(neighbor in boxSet || neighbor in newInterior ||
           neighbor in knownExterior)
         continue
-      println("   evaluating")
 
       /* find all boxes connected to this one, until we find one that's
          known to be exterior/interior, or can't find any more */
@@ -86,32 +84,33 @@ fun eliminateInteriorBoxes(boxes: MutableList<Box>): MutableList<Box> {
         toSearch.remove(current)
         connecteds.add(current)
         if(knownExterior(current, minx, miny, minz, maxx, maxy, maxz)) {
-          println("  current $current calculates exterior")
+          //println("  current $current calculates exterior")
           interior = false
           break
         }
         for(newNeighbor in current.getNeighbors()) {
-          /* ----- debugging ----- */
+          /* ----- debugging -----
           if(current.a == Point3D(2,2,5)) {
             println("looking at ${current.a} neighbor ${newNeighbor.a}")
             println("     in boxSet? ${newNeighbor in boxSet}")
             println("     boxSet.contains? ${boxSet.contains(newNeighbor)}")
-          }
+          } */
 
           if(newNeighbor in boxSet)
             continue
           if(newNeighbor in knownExterior) {
-            println("  neighbor $newNeighbor is int knownExterior")
+            //println("  neighbor $newNeighbor is int knownExterior")
             interior = false
             break
           } else {
             /* don't know what to do with this box. Keep searching. */
-            toSearch.add(newNeighbor)
+            if(!(newNeighbor in connecteds))
+              toSearch.add(newNeighbor)
           }
         }
       }
 
-      println("   Done loop, connecteds $connecteds, interior $interior")
+      //println("   Done loop, connecteds $connecteds, interior $interior")
 
       if(interior) {
         /* add our collection of connected boxSet to those needed to fill in
