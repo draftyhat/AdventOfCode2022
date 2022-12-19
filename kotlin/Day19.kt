@@ -76,12 +76,34 @@ fun readBlueprints(input: String): MutableList<Blueprint> {
 fun findMaxGeodes(blueprint: Blueprint, nminutes: Int): Int {
   var statuses = mutableListOf<Status>(Status())
 
+  /* find the maximum time at which we must have at least one robot of each
+     type in order to create at least one geode. This will allow us to
+     prune paths. */
+  /* the cost of one clay is A ores to make a robot plus 1 day, so A+1 units
+     the cost of one obsidian is B clays plus C ores, or A+
+
+     in the example, Blueprint 1:
+        Each ore robot costs 4 ore.
+        Each clay robot costs 2 ore.
+        Each obsidian robot costs 3 ore and 14 clay.
+        Each geode robot costs 2 ore and 7 obsidian.
+     working backwards, in order to create at least one geode, must have a
+       geode robot by nminutes-1
+     must have at least one obsidian robot by nminutes - 7, or
+        must have 2 obsidian robots by nminutes - 3
+     earliest a clay robot can appear: day 2
+   */
+  val minDaysToCreateRobot = mutableMapOf<String, Int>("ore" -> 0)
+  val timeLimits = mutableMapOf<String, Int>()
+  for(product in blueprint.robotCost.keys) {
+    val robotCost = blueprint.robotCost[product]
+
+  }
+
   for(time in 1..nminutes) {
     println("--Time $time-- ${statuses.size} statuses")
     val newStatuses = mutableListOf<Status>()
     for(status in statuses) {
-      println(" -- status $status")
-
       /* this status survives until next round */
       newStatuses.add(status)
 
@@ -97,11 +119,9 @@ fun findMaxGeodes(blueprint: Blueprint, nminutes: Int): Int {
         var foundThisStep = false
         var canMake = true
         val robotCost = blueprint.robotCost[newRobot]
-        println("   checking robot $newRobot, cost " + robotCost!!.entries.joinToString(","))
         for(requiredProduct in robotCost!!.keys) {
           val cost: Int = robotCost[requiredProduct]!!
           val have: Int = status.products[requiredProduct] ?: 0
-          println("      requiredProduct $requiredProduct cost $cost have $have")
           if(have < cost) {
             canMake = false
             break
@@ -114,7 +134,6 @@ fun findMaxGeodes(blueprint: Blueprint, nminutes: Int): Int {
         }
         if(canMake && foundThisStep) {
           /* make this robot! */
-          println("    making a $newRobot robot!")
           val newStatus = Status(status.products.toMutableMap(),
               status.robots.toMutableMap())
 
@@ -127,13 +146,10 @@ fun findMaxGeodes(blueprint: Blueprint, nminutes: Int): Int {
           newStatus.robots[newRobot] = (newStatus.robots[newRobot] ?: 0) + 1
           /* subtract the cost */
           for(requiredProduct in robotCost.keys) {
-            println("    requiredProduct $requiredProduct")
             val cost: Int = robotCost[requiredProduct]!!
             val have: Int = newStatus.products[requiredProduct] ?: 0
-            println("    making $newRobot robot, need $cost $requiredProduct, have $have")
             newStatus.products[requiredProduct] = have - cost
           }
-          println("  adding new status $newStatus")
           newStatuses.add(newStatus)
         }
       }
@@ -169,6 +185,19 @@ fun Part1(input:String) : Boolean {
 }
 
 fun Part2(input:String) : Boolean {
+  val nminutes = 32
+  /* elephants!!!!! */
+  var blueprints = readBlueprints(input)
+  if(blueprints.size > 3)
+    blueprints = blueprints.subList(0, 3)
+
+  var retval = 1
+  for(blueprint in blueprints) {
+    val maxGeodes = findMaxGeodes(blueprint, nminutes)
+    retval *= maxGeodes
+  }
+  println("Answer: $retval")
+
   return false
 }
 
