@@ -78,31 +78,68 @@ fun findMaxGeodes(blueprint: Blueprint, nminutes: Int): Int {
 
   /* find the maximum time at which we must have at least one robot of each
      type in order to create at least one geode. This will allow us to
-     prune paths. */
-  /* the cost of one clay is A ores to make a robot plus 1 day, so A+1 units
-     the cost of one obsidian is B clays plus C ores, or A+
-
-     in the example, Blueprint 1:
-        Each ore robot costs 4 ore.
-        Each clay robot costs 2 ore.
-        Each obsidian robot costs 3 ore and 14 clay.
-        Each geode robot costs 2 ore and 7 obsidian.
-     working backwards, in order to create at least one geode, must have a
-       geode robot by nminutes-1
-     must have at least one obsidian robot by nminutes - 7, or
-        must have 2 obsidian robots by nminutes - 3
-     earliest a clay robot can appear: day 2
+     prune paths.
+     How do we do this? We find the minimum time t(type) it takes to make
+     each type of product. We eliminate all paths that don't have at
+     least 1 product by nminutes - t(geode) + t(product)
+     yeah, that got rid of about 2000 of 400000 paths :/
+     What if we score the value of each status, and keep only the top 1000, or
+     something like that?
    */
-  val minDaysToCreateRobot = mutableMapOf<String, Int>("ore" -> 0)
-  val timeLimits = mutableMapOf<String, Int>()
+  val minimumTimes = mutableMapOf<String, Int?>()
   for(product in blueprint.robotCost.keys) {
-    val robotCost = blueprint.robotCost[product]
-
+    minimumTimes[product] = null
   }
 
   for(time in 1..nminutes) {
+    if(time == 25) {
+      println("min time entries: " + minimumTimes.entries.joinToString(","))
+    }
+
     println("--Time $time-- ${statuses.size} statuses")
     val newStatuses = mutableListOf<Status>()
+
+    /* prune statuses. Any status which doesn't have at least one product by
+     * the minimum time can be discarded */
+    /* yes, this code is ugly. My Kotlin is insufficient... */
+    var nPruned = 0
+    val minTimeGeode = minimumTimes["geode"]
+    if(minTimeGeode != null) {
+      println("minTimeGeode $minTimeGeode")
+      val minTimeClay = nminutes - minTimeGeode + (minimumTimes["clay"] ?: nminutes)
+      if(time == minTimeClay) {
+        /* prune all statuses which don't have a clay */
+        var statusIndex = 0
+        while(statusIndex < statuses.size) {
+          val status = statuses[statusIndex]
+          if(status.products["clay"] == 0) {
+            statuses.removeAt(statusIndex)
+            nPruned = 1
+          }
+          else
+            statusIndex += 1
+        }
+        println("min clay time $time: nPruned $nPruned")
+      }
+
+      nPruned = 0
+      val minTimeObsidian = nminutes - minTimeGeode + (minimumTimes["obsidian"] ?: nminutes)
+      if(time == minTimeObsidian) {
+        /* prune all statuses which don't have an obsidian */
+        var statusIndex = 0
+        while(statusIndex < statuses.size) {
+          val status = statuses[statusIndex]
+          if(status.products["obsidian"] == 0) {
+            statuses.removeAt(statusIndex)
+            nPruned += 1
+          }
+          else
+            statusIndex += 1
+        }
+        println("min obsidian time $time: nPruned $nPruned")
+      }
+    }
+
     for(status in statuses) {
       /* this status survives until next round */
       newStatuses.add(status)
@@ -150,6 +187,11 @@ fun findMaxGeodes(blueprint: Blueprint, nminutes: Int): Int {
             val have: Int = newStatus.products[requiredProduct] ?: 0
             newStatus.products[requiredProduct] = have - cost
           }
+
+          /* memoize minimum time to get one of these products */
+          if(newStatus.robots[newRobot] == 1)
+            minimumTimes[newRobot] = Math.min(
+                minimumTimes[newRobot] ?: nminutes, time + 1)
           newStatuses.add(newStatus)
         }
       }
