@@ -9,7 +9,7 @@ val DAY=20
 val YEAR=2022
 val INPUTDIR="../input"
 
-class MixNumber(var value: Int, val originalPosition: Int, var position: Int) {
+class MixNumber(var value: Long, var originalPosition: Long, var position: Long) {
   override fun toString(): String {
     return "$position] $value ($originalPosition)"
   }
@@ -17,10 +17,10 @@ class MixNumber(var value: Int, val originalPosition: Int, var position: Int) {
 
 fun readNumbers(input: String): MutableList<MixNumber> {
   val numbers = mutableListOf<MixNumber>()
-  var position = 0
+  var position = 0L
   for(line in input.trim().split('\n'))
   {
-    numbers.add(MixNumber(line.toInt(), position, position))
+    numbers.add(MixNumber(line.toLong(), position, position))
     position++
   }
 
@@ -28,14 +28,12 @@ fun readNumbers(input: String): MutableList<MixNumber> {
 }
 
 /* returns position of 0 */
-fun mixNumbers(numbers: MutableList<MixNumber>): Int {
-  val preservedOrder = numbers.toList()
+fun mixNumbers(numbers: MutableList<MixNumber>, mixOrder: List<MixNumber>): Long {
+  var zeroOriginalPosition = 0L
 
-  var zeroOriginalPosition = 0
-
-  val nNumbers = preservedOrder.size
-  for(number in preservedOrder) {
-    if(number.value == 0) {
+  val nNumbers = mixOrder.size.toLong()
+  for(number in mixOrder) {
+    if(number.value == 0L) {
       zeroOriginalPosition = number.originalPosition
       continue
     }
@@ -55,11 +53,11 @@ fun mixNumbers(numbers: MutableList<MixNumber>): Int {
 
     /* this is a circular list; the last position == the first position */
     val newPosition = (number.position + number.value).mod(nNumbers - 1)
-    var addend = 0
-    var shiftStart = 0
-    var shiftEnd = 0
+    var addend = 0L
+    var shiftStart = 0L
+    var shiftEnd = 0L
     /* if moving this number right */
-    if(number.value > 0) {
+    if(number.value > 0L) {
       /* if no wrap, shift numbers between 1 position to left */
       if(number.position < newPosition) {
         shiftStart = number.position + 1
@@ -90,33 +88,34 @@ fun mixNumbers(numbers: MutableList<MixNumber>): Int {
       }
     }
     for(movingNumberIndex in shiftStart..shiftEnd) {
-      numbers[movingNumberIndex].position += addend
+      numbers[movingNumberIndex.toInt()].position += addend
     }
 
     /* remove number from numbers */
-    numbers.removeAt(number.position)
+    numbers.removeAt(number.position.toInt())
 
     /* add moved number to numbers in the correct position */
-    numbers.add(newPosition, number)
+    numbers.add(newPosition.toInt(), number)
 
     /* update moved number's index */
     number.position = newPosition
   }
 
-  return preservedOrder[zeroOriginalPosition].position
+  return mixOrder[zeroOriginalPosition.toInt()].position
 }
 
 fun Part1(input:String) : Boolean {
   val numbers = readNumbers(input)
-  val zeroPosition = mixNumbers(numbers)
+  val mixOrder = numbers.toList()
+  val zeroPosition = mixNumbers(numbers, mixOrder).toInt()
   println("0: ${numbers[zeroPosition]}  " +
-      "1000: ${numbers[(zeroPosition + 1000).mod(numbers.size)]}  " +
-      "2000: ${numbers[(zeroPosition + 2000).mod(numbers.size)]}  " +
-      "3000: ${numbers[(zeroPosition + 3000).mod(numbers.size)]}  ")
+      "1000: ${numbers[(zeroPosition + 1000L).mod(numbers.size)]}  " +
+      "2000: ${numbers[(zeroPosition + 2000L).mod(numbers.size)]}  " +
+      "3000: ${numbers[(zeroPosition + 3000L).mod(numbers.size)]}  ")
   println("Final value: " + (
-      numbers[(zeroPosition + 1000).mod(numbers.size)].value +
-      numbers[(zeroPosition + 2000).mod(numbers.size)].value +
-      numbers[(zeroPosition + 3000).mod(numbers.size)].value).toString())
+      numbers[(zeroPosition + 1000L).mod(numbers.size)].value +
+      numbers[(zeroPosition + 2000L).mod(numbers.size)].value +
+      numbers[(zeroPosition + 3000L).mod(numbers.size)].value).toString())
   return true
 }
 
@@ -126,19 +125,20 @@ fun Part2(input:String) : Boolean {
   for(number in numbers)
     number.value *= decryptionKey
   var zeroPosition = 0
+  val mixOrder = numbers.toList()
   for(mixRound in 0 until 10) {
-    zeroPosition = mixNumbers(numbers)
-    println("round $mixRound: " + numbers.joinToString(","))
+    zeroPosition = mixNumbers(numbers, mixOrder).toInt()
+    println("round $mixRound: " + numbers.joinToString("\n"))
   }
 
   println("0: ${numbers[zeroPosition]}  " +
-      "1000: ${numbers[(zeroPosition + 1000).mod(numbers.size)]}  " +
-      "2000: ${numbers[(zeroPosition + 2000).mod(numbers.size)]}  " +
-      "3000: ${numbers[(zeroPosition + 3000).mod(numbers.size)]}  ")
+      "1000: ${numbers[(zeroPosition + 1000L).mod(numbers.size)]}  " +
+      "2000: ${numbers[(zeroPosition + 2000L).mod(numbers.size)]}  " +
+      "3000: ${numbers[(zeroPosition + 3000L).mod(numbers.size)]}  ")
   println("Final value: " + (
-      numbers[(zeroPosition + 1000).mod(numbers.size)].value +
-      numbers[(zeroPosition + 2000).mod(numbers.size)].value +
-      numbers[(zeroPosition + 3000).mod(numbers.size)].value).toString())
+      numbers[(zeroPosition + 1000L).mod(numbers.size)].value +
+      numbers[(zeroPosition + 2000L).mod(numbers.size)].value +
+      numbers[(zeroPosition + 3000L).mod(numbers.size)].value).toString())
   return true
 }
 
